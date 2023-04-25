@@ -1,0 +1,161 @@
+#include <Arduino.h>
+#include <SPI.h>
+#include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
+#include "mcqueen.h"
+
+#include "RF24.h"
+
+TFT_eSPI tft = TFT_eSPI();
+
+#define MAX_IMAGE_SIZE 16384
+#define IMAGE_FRAGMENT_SIZE 27
+
+typedef struct {
+   uint8_t buffer[MAX_IMAGE_SIZE];
+   size_t length;
+} image_t;
+
+image_t image;
+
+typedef struct {
+   uint16_t index;
+   uint16_t total;
+   uint8_t length;
+   uint8_t buffer[IMAGE_FRAGMENT_SIZE];
+} image_fragment_t;
+
+image_fragment_t imageFragment;
+
+#define COMMAND_SIZE 32
+#define SIZE 32                   // this is the maximum for this example. (minimum is 1)
+uint8_t commandBuffer[COMMAND_SIZE + 1];  // for the RX node
+
+// instantiate an object for the nRF24L01 transceiver
+RF24 radio(22, 5);  // using pin 7 for the CE pin, and pin 8 for the CSN pin
+
+enum pipe_t { command = 1, telemetry, video, pairing };
+// Let these addresses be used for the pair
+
+// For this example, we'll be using 6 addresses; 1 for each TX node
+// It is very helpful to think of an address as a path instead of as
+// an identifying device destination
+
+// Notice that the last byte is the only byte that changes in the last 5
+// addresses. This is a limitation of the nRF24L01 transceiver for pipes 2-5
+// because they use the same first 4 bytes from pipe 1.
+uint64_t address[6] = { 0x7878787878LL,
+                        0xB3B4B5B6F1LL,
+                        0xB3B4B5B6CDLL,
+                        0xB3B4B5B6A3LL,
+                        0xB3B4B5B60FLL,   // free
+                        0xB3B4B5B605LL }; // free
+
+// to use different addresses on a pair of radios, we need a variable to
+// uniquely identify which address this radio will use to transmit
+bool radioNumber;  // 0 uses address[0] to transmit, 1 uses address[1] to transmit
+
+void displayInit();
+void receiveImage();
+void receiveData();
+void bufferImageFragment();
+
+void setup() {
+   Serial.begin(115200);
+   displayInit();
+
+   SPI.begin(18, 19, 23, 5);
+
+   // initialize the transceiver on the SPI bus
+   if (!radio.begin()) {
+      Serial.println(F("radio hardware is not responding!!"));
+      while (1) {
+      }  // hold in infinite loop
+   }
+
+   radio.setChannel(111);
+   radio.setDataRate(rf24_datarate_e::RF24_2MBPS);
+   radio.setAutoAck(true);
+
+   // Set the PA Level low to try preventing power supply related problems
+   // because these examples are likely run with nodes in close proximity to
+   // each other.
+   radio.setPALevel(RF24_PA_LOW);  // RF24_PA_MAX is default.
+
+   // save on transmission time by setting the radio to only transmit the
+   // number of bytes we need to transmit
+   radio.setPayloadSize(32);  // default value is the maximum 32 bytes
+
+   radio.openWritingPipe(address[pipe_t::command]);
+
+   // set the RX address of the TX node into a RX pipe
+   radio.openReadingPipe(1, address[pipe_t::command]);  // using pipe 1
+   radio.openReadingPipe(2, address[pipe_t::telemetry]);  // using pipe 2
+   radio.openReadingPipe(3, address[pipe_t::video]);  // using pipe 3
+   radio.openReadingPipe(4, address[pipe_t::pairing]);  // using pipe 4
+
+   radio.startListening();  // put radio in RX mode
+
+   // For debugging info
+   // printf_begin();             // needed only once for printing details
+   radio.printDetails();        // (smaller) function that prints raw register values
+   radio.printPrettyDetails();  // (larger) function that prints human readable data
+
+    TJpgDec.drawJpg(0, 0, (const uint8_t*)mcqueen, 34250);
+
+   delay(2000);
+}
+
+void loop() {
+   receiveData();
+}
+
+uint32_t counter = 0;
+void receiveData() {
+   uint8_t pipe;
+   if (radio.available(&pipe)) {      // is there a payload?
+      if (pipe == pipe_t::video) {
+         radio.read(&imageFragment, 32);  // fetch payload from FIFO
+         bufferImageFragment();
+      } else if (pipe == pipe_t::telemetry) {
+         Serial.println("Telemetry received");
+      } else if (pipe == pipe_t::pairing) {
+         Serial.println("Pairing request received");
+      } else if (pipe == pipe_t::command) {
+         Serial.println("Command received");
+      } else {
+         Serial.print("Unknown data received at pipe: ");
+         Serial.println(pipe);
+      }
+      radio.flush_rx();
+   }
+}
+
+void bufferImageFragment() {
+   memcpy(&(image.buffer[imageFragment.index]), imageFragment.buffer, imageFragment.length);
+   if (imageFragment.index * IMAGE_FRAGMENT_SIZE + imageFragment.length >= imageFragment.total) {
+      Serial.printf("[*] index: %d len: %d total: %d \n", imageFragment.index, imageFragment.length, imageFragment.total);
+
+      image.length = imageFragment.total;
+      TJpgDec.drawJpg(0, 0, (const uint8_t*)image.buffer, image.length);
+   }
+}
+
+bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) {
+   if (y >= tft.height()) {
+      Serial.println("Image too big");
+      return 0;
+   }
+   tft.pushImage(x, y, w, h, bitmap);
+   return 1;
+}
+
+void displayInit() {
+   tft.begin();
+   tft.setRotation(1);
+   tft.fillScreen(TFT_BLACK);
+
+   TJpgDec.setJpgScale(1);
+   TJpgDec.setSwapBytes(true);
+   TJpgDec.setCallback(tft_output);
+}
