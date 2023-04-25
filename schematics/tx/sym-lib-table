@@ -1,0 +1,7 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "ESP32-DEVKIT-V1")(type "KiCad")(uri "C:/.projects/rc-car/schematics/libs/ESP32-DEVKIT-V1.kicad_sym")(options "")(descr ""))
+  (lib (name "joy_sticks")(type "KiCad")(uri "${KIPRJMOD}/joy_sticks.kicad_sym")(options "")(descr ""))
+  (lib (name "rotary_encoder")(type "KiCad")(uri "${KIPRJMOD}/rotary_encoder.kicad_sym")(options "")(descr ""))
+  (lib (name "NRF24L01P-MODULE-PCB")(type "KiCad")(uri "C:/.projects/rc-car/schematics/libs/NRF24L01P-MODULE-PCB.kicad_sym")(options "")(descr ""))
+)

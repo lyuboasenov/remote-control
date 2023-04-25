@@ -1,0 +1,71 @@
+{
+   "files.associations": {
+      "string_view": "cpp",
+      "array": "cpp",
+      "initializer_list": "cpp",
+      "utility": "cpp",
+      "deque": "cpp",
+      "string": "cpp",
+      "unordered_map": "cpp",
+      "unordered_set": "cpp",
+      "vector": "cpp",
+      "optional": "cpp",
+      "system_error": "cpp",
+      "*.tcc": "cpp",
+      "new": "cpp",
+      "istream": "cpp",
+      "ostream": "cpp",
+      "functional": "cpp",
+      "tuple": "cpp",
+      "type_traits": "cpp",
+      "atomic": "cpp",
+      "cctype": "cpp",
+      "chrono": "cpp",
+      "clocale": "cpp",
+      "cmath": "cpp",
+      "condition_variable": "cpp",
+      "cstdarg": "cpp",
+      "cstddef": "cpp",
+      "cstdint": "cpp",
+      "cstdio": "cpp",
+      "cstdlib": "cpp",
+      "cstring": "cpp",
+      "ctime": "cpp",
+      "cwchar": "cpp",
+      "cwctype": "cpp",
+      "exception": "cpp",
+      "algorithm": "cpp",
+      "iterator": "cpp",
+      "map": "cpp",
+      "memory": "cpp",
+      "memory_resource": "cpp",
+      "numeric": "cpp",
+      "random": "cpp",
+      "ratio": "cpp",
+      "fstream": "cpp",
+      "iomanip": "cpp",
+      "iosfwd": "cpp",
+      "limits": "cpp",
+      "mutex": "cpp",
+      "sstream": "cpp",
+      "stdexcept": "cpp",
+      "streambuf": "cpp",
+      "thread": "cpp",
+      "cinttypes": "cpp",
+      "typeinfo": "cpp"
+   },
+   "spellright.language": [
+      "en"
+   ],
+   "spellright.documentTypes": [
+      "markdown",
+      "latex",
+      "plaintext",
+      "cpp"
+   ],
+   "spellright.parserByClass": {
+      "arduino-output": {
+         "parser": "code"
+      }
+   }
+}
